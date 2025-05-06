@@ -1,0 +1,25 @@
+---
+- name: Limit systemd journal logs to 100MB and 7 days
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Set SystemMaxUse to 100MB
+      lineinfile:
+        path: /etc/systemd/journald.conf
+        regexp: '^#?SystemMaxUse='
+        line: 'SystemMaxUse=100M'
+
+    - name: Set MaxRetentionSec to 7 days
+      lineinfile:
+        path: /etc/systemd/journald.conf
+        regexp: '^#?MaxRetentionSec='
+        line: 'MaxRetentionSec=7day'
+
+    - name: Restart systemd-journald
+      systemd:
+        name: systemd-journald
+        state: restarted
+
+    - name: Vacuum journal logs down to 100MB and 7 days
+      command: journalctl --vacuum-size=100M --vacuum-time=7d
