@@ -1,0 +1,20 @@
+---
+- name: Install Node.js, npm, and nvm
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Install Node.js and npm
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - nodejs
+        - npm
+
+    - name: Install nvm
+      shell: |
+        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
+        source ~/.bashrc
+      args:
+        executable: /bin/bash

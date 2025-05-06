@@ -1,0 +1,9 @@
+- name: Comment out broken PPA entries
+  replace:
+    path: "/etc/apt/sources.list.d/{{ item }}"
+    regexp: '^([^#].*)'
+    replace: '# \1'
+  with_items:
+    - azure-cli.list
+    - ondrej-php-ubuntu-mantic.list
+  ignore_errors: yes

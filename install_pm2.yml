@@ -1,0 +1,26 @@
+---
+- name: Install PM2 Process Manager and enable startup
+  hosts: all
+  become: yes
+  tasks:
+    - name: Ensure Node.js and npm are installed (Debian-based)
+      apt:
+        name:
+          - nodejs
+          - npm
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Install PM2 globally via npm
+      npm:
+        name: pm2
+        global: yes
+
+    - name: Set up PM2 to launch on system startup
+      command: pm2 startup systemd
+      register: pm2_startup_output
+
+    - name: Execute PM2 startup command as per generated output
+      command: "{{ pm2_startup_output.stdout_lines[-1] }}"
+      when: "'sudo' in pm2_startup_output.stdout"

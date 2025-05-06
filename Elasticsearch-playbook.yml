@@ -1,0 +1,12 @@
+---
+- name: Check Elasticsearch status and restart if necessary
+  hosts: all
+  tasks:
+    - name: Check Elasticsearch service status
+      command: systemctl is-active elasticsearch
+      register: elasticsearch_status
+      changed_when: false
+
+    - name: Restart Elasticsearch service
+      command: systemctl restart elasticsearch
+      when: elasticsearch_status.stdout != "active"
