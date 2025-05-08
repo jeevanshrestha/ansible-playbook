@@ -1,0 +1,82 @@
+---
+- name: Install and configure Jenkins with OpenJDK 21
+  hosts: all
+  become: yes
+  vars:
+    jenkins_port: 8080
+    java_package: openjdk-21-jdk
+    jenkins_repo_url: "https://pkg.jenkins.io/debian-stable" 
+
+  tasks:
+   # 1. Install OpenJDK 21 
+    - name: Install OpenJDK 21
+      apt: 
+        name: "{{ java_package }}"
+        state: present
+        update_cache: yes
+ 
+
+    # 2. Add Jenkins GPG key properly (modern method)
+    - name: Add Jenkins GPG key
+      apt_key:
+        url: "https://pkg.jenkins.io/debian-stable/jenkins.io.key"
+        keyring: "/usr/share/keyrings/jenkins.gpg"
+        state: present
+
+    # 3. Add Jenkins repo with explicit keyring reference
+    - name: Add Jenkins repository
+      apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/jenkins.gpg] https://pkg.jenkins.io/debian-stable binary/"
+        state: present
+        filename: "jenkins"
+        update_cache: yes
+
+    # 4. Force APT cache update (ignore warnings)
+    - name: Force update apt cache
+      command: apt-get update --allow-insecure-repositories
+      changed_when: false
+      ignore_errors: yes
+
+    # Continue with Jenkins installation...
+    - name: Install Jenkins
+      apt:
+        name: jenkins
+        state: latest
+        update_cache: yes
+
+    - name: Ensure Jenkins service is running
+      service:
+        name: jenkins
+        state: started
+        enabled: yes
+
+    - name: Wait for Jenkins to initialize (up to 2 minutes)
+      wait_for:
+        path: /var/lib/jenkins/secrets/initialAdminPassword
+        timeout: 120
+      register: jenkins_ready
+      until: jenkins_ready is succeeded
+      retries: 3
+      delay: 10
+      ignore_errors: yes
+
+    - name: Display initial admin password if available
+      debug:
+        msg: "Jenkins Initial Admin Password: {{ lookup('file', '/var/lib/jenkins/secrets/initialAdminPassword') }}"
+      when: jenkins_ready is succeeded
+      ignore_errors: yes
+
+    - name: Alternative password retrieval method
+      shell: |
+        if [ -f /var/lib/jenkins/secrets/initialAdminPassword ]; then
+          cat /var/lib/jenkins/secrets/initialAdminPassword
+        else
+          echo "Password file not found yet. Try again in 30 seconds."
+        fi
+      register: jenkins_password
+      changed_when: false
+      failed_when: false
+
+    - name: Display alternative password output
+      debug:
+        var: jenkins_password.stdout

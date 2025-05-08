@@ -1,0 +1,14 @@
+- name: Setup Magento Filebeat
+  hosts: magento
+  become: true
+  roles:
+    - filebeat
+
+- name: Setup ELK Stack
+  hosts: elk
+  become: true
+  roles:
+    - elasticsearch
+    - logstash
+    - kibana
+    - nginx

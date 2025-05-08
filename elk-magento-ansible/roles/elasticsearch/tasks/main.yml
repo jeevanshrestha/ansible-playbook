@@ -1,0 +1,52 @@
+- name: Add Elastic APT repository GPG key
+  apt_key:
+    url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    state: present
+
+- name: Add Elastic APT repository for 8.x version
+  apt_repository:
+    repo: 'deb https://artifacts.elastic.co/packages/8.x/apt stable main'
+    state: present
+    filename: 'elastic-8.x'
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Install Elasticsearch 8.x
+  apt:
+    name: elasticsearch
+    state: present
+
+- name: Start and enable Elasticsearch service
+  systemd:
+    name: elasticsearch
+    enabled: true
+    state: started
+
+- name: Configure Elasticsearch settings
+  lineinfile:
+    path: /etc/elasticsearch/elasticsearch.yml
+    regexp: '^{{ item.key }}'
+    line: '{{ item.key }}: {{ item.value }}'
+    state: present
+  loop:
+    - { key: 'cluster.name', value: 'elasticsearch' }
+    - { key: 'node.name', value: 'node-1' }
+    - { key: 'network.host', value: '0.0.0.0' }
+    - { key: 'xpack.monitoring.enabled', value: 'true' }
+    - { key: 'xpack.monitoring.elasticsearch.hosts', value: '["http://localhost:9200"]' }
+
+- name: Restart Elasticsearch to apply configuration changes
+  systemd:
+    name: elasticsearch
+    state: restarted
+    enabled: true
+
+- name: Verify Elasticsearch version
+  shell: curl -X GET http://localhost:9200
+  register: es_version_output
+
+- name: Display Elasticsearch version
+  debug:
+    msg: "{{ es_version_output.stdout }}"

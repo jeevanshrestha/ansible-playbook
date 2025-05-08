@@ -1,0 +1,16 @@
+- name: Install Logstash
+  apt:
+    name: logstash
+    state: present
+    update_cache: true
+
+- name: Copy Logstash pipeline config
+  template:
+    src: magento-pipeline.conf.j2
+    dest: /etc/logstash/conf.d/magento.conf
+
+- name: Enable and start Logstash
+  systemd:
+    name: logstash
+    enabled: true
+    state: started

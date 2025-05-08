@@ -1,0 +1,15 @@
+filebeat.inputs:
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/nginx/*.log
+      - /var/log/php*.log
+      - /web/webuser/public_com/var/log/v*.log
+
+output.logstash:
+  hosts: ["{{ hostvars['elk-vm'].ansible_host }}:5044"]
+output.elasticsearch:
+  hosts: ["http://localhost:9200"]
+
+setup.kibana:
+  host: "localhost:5601"

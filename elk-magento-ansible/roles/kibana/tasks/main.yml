@@ -1,0 +1,22 @@
+- name: Install Kibana
+  apt:
+    name: kibana
+    state: present
+    update_cache: true
+
+- name: Configure Kibana basePath
+  lineinfile:
+    path: /etc/kibana/kibana.yml
+    line: 'server.basePath: "/kibana"'
+    create: yes
+
+- name: Enable Kibana rewrite basePath
+  lineinfile:
+    path: /etc/kibana/kibana.yml
+    line: 'server.rewriteBasePath: true'
+    create: yes
+
+- name: Restart Kibana
+  systemd:
+    name: kibana
+    state: restarted

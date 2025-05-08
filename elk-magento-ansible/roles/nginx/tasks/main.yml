@@ -1,0 +1,25 @@
+- name: Ensure Nginx is installed
+  apt:
+    name: nginx
+    state: present
+    update_cache: true
+
+- name: Add reverse proxy for Kibana under /kibana
+  blockinfile:
+    path: /etc/nginx/sites-available/dev.harveynormancommercial.com.au
+    insertafter: "^\\s*server\\s*\\{"
+    block: |
+      location /kibana/ {
+          proxy_pass http://localhost:5601/;
+          proxy_http_version 1.1;
+          proxy_set_header Upgrade $http_upgrade;
+          proxy_set_header Connection 'upgrade';
+          proxy_set_header Host $host;
+          proxy_cache_bypass $http_upgrade;
+          rewrite ^/kibana/(.*)$ /$1 break;
+      }
+
+- name: Reload Nginx to apply changes
+  service:
+    name: nginx
+    state: reloaded
